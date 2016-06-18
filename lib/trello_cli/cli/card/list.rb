@@ -11,7 +11,20 @@ module TrelloCli
           option_parser.parse!
 
           data = list_cards.map do |c|
-            { name: c.name, id: c.id, desc: c.desc }
+            members = (c.member_ids || []).map do |id|
+              m = Trello::Member.find(id)
+              "#{m.attributes[:full_name]} (#{m.attributes[:username]})"
+            end
+            {
+              name: c.name,
+              id: c.id,
+              url: c.url,
+              desc: c.desc,
+              updated: c.last_activity_date,
+              members: members,
+              comments: c.attributes[:badges]['comments'] || 0,
+              attachments: c.attributes[:badges]['attachments'] || 0,
+            }
           end
 
           puts TrelloCli::Formatters::CardList.new(data).output(@options[:output])
